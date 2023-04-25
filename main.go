@@ -16,16 +16,16 @@ func main() {
 	// 上位の行をコメントアウトすることで下位行を有効化できます。
 	// lower lines can be enabled by commenting out the higher lines.
 	// level0: Create an instance of chrome
-	//ctx, _ := chromedp.NewContext(context.Background()) /*
+	//ctx, cancel := chromedp.NewContext(context.Background()) /*
 	// level0-debug1: Instance created with logs
-	//ctx, _ := chromedp.NewContext(context.Background(), chromedp.WithDebugf(log.Printf)) /*
+	//ctx, cancel := chromedp.NewContext(context.Background(), chromedp.WithDebugf(log.Printf)) /*
 	// level0-debug2: Create instances in no-headless mode
 	opts := append(chromedp.DefaultExecAllocatorOptions[:],
 		chromedp.Flag("headless", false),
 		chromedp.Flag("enable-automation", false),
 	)
 	allocCtx, _ := chromedp.NewExecAllocator(context.Background(), opts...)
-	ctx, _ := chromedp.NewContext(allocCtx, chromedp.WithLogf(log.Printf))
+	ctx, cancel := chromedp.NewContext(allocCtx, chromedp.WithLogf(log.Printf))
 	//*/
 
 	// level1: Access the page
@@ -33,6 +33,7 @@ func main() {
 		chromedp.Navigate("https://www.google.com"),
 		chromedp.Click(`//*[@id="gb"]/div/div[2]/a`, chromedp.NodeVisible),
 	); err != nil {
+		cancel()
 		log.Fatal("err1-1: Failed login")
 	}
 
@@ -48,20 +49,22 @@ func main() {
 		input.InsertText(mailAddress),
 		chromedp.Click(`//*[@id="identifierNext"]/div/button/div[3]`, chromedp.NodeVisible),
 	); err != nil {
+		cancel()
 		log.Fatal("err3-1@login: Failed login")
 	}
-	time.Sleep(10 * time.Second)
 
 	// level3-2: Page Transition Confirmation
+	time.Sleep(1 * time.Second)
 	var url2CheckTransition string
 	if err := chromedp.Run(ctx,
-		chromedp.WaitVisible(`//*[@id="headingText"]/span`),
+		chromedp.WaitVisible(`body > div > div > div > div  > div`),
 		chromedp.Location(&url2CheckTransition),
 	); err != nil {
+		cancel()
 		log.Fatal("err3-2@login: Failed in page transition confirmation process")
 	}
-	if strings.Contains(url2CheckTransition, "dsh") {
-		fmt.Println(url2CheckTransition)
+	if !strings.Contains(url2CheckTransition, "https://accounts.google.com/v3/signin/challenge/pwd?TL=") {
+		cancel()
 		log.Fatal("err3-3@login: Failed to load on email address input page")
 	}
 
@@ -69,19 +72,23 @@ func main() {
 	if err := chromedp.Run(ctx,
 		input.InsertText(password),
 		chromedp.Click(`//*[@id="passwordNext"]/div/button/div[3]`, chromedp.NodeVisible),
-		chromedp.WaitVisible(`//*[@id="headingText"]/span`),
 	); err != nil {
+		cancel()
 		log.Fatal("err4-1@login: Failed to operate the login button")
 	}
-	time.Sleep(5 * time.Second)
 
 	// level4-2: Page Transition Confirmation
+	time.Sleep(10 * time.Second)
 	if err := chromedp.Run(ctx,
+		chromedp.WaitVisible(`body > div > div > div > div  > div`),
 		chromedp.Location(&url2CheckTransition),
 	); err != nil {
+		cancel()
 		log.Fatal("err4-2@login: Failed in page transition confirmation process")
 	}
-	if strings.Contains(url2CheckTransition, "pwd") {
+	fmt.Println(url2CheckTransition)
+	if !strings.Contains(url2CheckTransition, "https://www.google.com/") {
+		cancel()
 		log.Fatal("err4-3@login: Failed to load on password input page")
 	}
 
