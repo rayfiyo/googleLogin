@@ -70,6 +70,7 @@ func main() {
 
 	// level4: Processing password
 	if err := chromedp.Run(ctx,
+		chromedp.Click(`//*[@id="password"]/div[1]/div/div[1]/input`, chromedp.NodeVisible),
 		input.InsertText(password),
 		chromedp.Click(`//*[@id="passwordNext"]/div/button/div[3]`, chromedp.NodeVisible),
 	); err != nil {
