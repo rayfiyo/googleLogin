@@ -1,4 +1,2 @@
 # googleLogin
-
-# Warning.
-This repository has been abandoned because it did not work
+This repository has been archived because it did not work
